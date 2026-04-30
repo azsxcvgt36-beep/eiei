@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ฝึกปฐมพยาบาล</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    h1 { color: #0077ff; }
+
+    button {
+      background: #0077ff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      margin: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #005bcc;
+      transform: scale(1.05);
+    }
+
+    .result { margin-top: 20px; font-size: 18px; font-weight: bold; }
+    .score { font-size: 18px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>🩺 ฝึกการเป็นคนนะไอ้สัx</h1>
+
+  <div id="lesson">
+    <p> ของง่ายๆลองดูไม่เสียหาย😏</p>
+    <button onclick="startGame()">กดเถอะ</button>
+  </div>
+
+  <div id="game" style="display:none;">
+    <div class="score">คะแนน: <span id="score">0</span></div>
+
+    <h2 id="question"></h2>
+    <div id="choices"></div>
+
+    <div id="result" class="result"></div>
+    <button onclick="nextQuestion()" id="nextBtn" style="display:none;">➡️ ถัดไป</button>
+  </div>
+
+</div>
+
+<!-- เสียง -->
+<audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+<audio id="correctSound" src="https://www.soundjay.com/human/sounds/applause-8.mp3"></audio>
+<audio id="wrongSound" src="https://www.soundjay.com/button/sounds/beep-10.mp3"></audio>
+
+<script>
+let score = 0;
+let current = 0;
+let answered = false; // 🔥 กันกดซ้ำ
+
+const questions = [
+  {
+    q: "มีคนหมดสติอยู่ตรงหน้า คุณจะทำไง 😨",
+    choices: [
+      {text: " โทรเรียกรถพยาบาล ", score: 1, msg: "โคตรดี 👍 ช่วยชีวิตคนได้!", emoji: "😎"},
+      {text: " วิ่งไปผายปอด ", score: 0.5, msg: "อย่างน้อยก็ถือว่ายังช่วยอยู่แต่ทีหลังขอเริ่ดกว่านี้😑", emoji: "🤨"},
+      {text: " กินข้าว ", score: 0, msg: "ห๊ะ", emoji: "💀"}
+     
+    ]
+  },
+  {
+    q: "คนเลือดออกเยอะ คุณควร?",
+    choices: [
+      {text: "🩹 กดแผลห้ามเลือด", score: 1, msg: "ถูกต้อง มือโปรมาก 🏥", emoji: "🔥"},
+        {text: "📱 รำเสต็ปนารา", score: 0, msg: "เริ่ดเลยนะแต่แบบนี้ก็เริ่ดเหมือนเดิม😑", emoji: "📉"},
+      {text: "😰 พอกผิว", score: 0.5, msg: "มานิต้า100% 🤝", emoji: "🙂"}
+    ]
+  }
+];
+
+function playSound(id){
+  let sound = document.getElementById(id);
+  sound.currentTime = 0;
+  sound.play();
+}
+
+function startGame(){
+  document.getElementById("lesson").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  loadQuestion();
+}
+
+function loadQuestion(){
+  answered = false; // รีเซ็ตสถานะ
+
+  let q = questions[current];
+  document.getElementById("question").innerText = q.q;
+
+  let choicesDiv = document.getElementById("choices");
+  choicesDiv.innerHTML = "";
+
+  q.choices.forEach((choice) => {
+    let btn = document.createElement("button");
+    btn.innerText = choice.text;
+    btn.onclick = () => checkAnswer(choice, btn);
+    choicesDiv.appendChild(btn);
+  });
+
+  document.getElementById("result").innerHTML = "";
+  document.getElementById("nextBtn").style.display = "none";
+}
+
+function checkAnswer(choice, clickedBtn){
+  if(answered) return; // 🔒 กันกดซ้ำ
+  answered = true;
+
+  playSound("clickSound");
+
+  let result = document.getElementById("result");
+
+  score += choice.score;
+  document.getElementById("score").innerText = score;
+
+  if(choice.score === 1){
+    playSound("correctSound");
+  } else {
+    playSound("wrongSound");
+  }
+
+  result.innerHTML = `${choice.msg} ${choice.emoji}`;
+
+  // 🔒 ปิดปุ่มทั้งหมด
+  let buttons = document.querySelectorAll("#choices button");
+  buttons.forEach(btn => {
+    btn.disabled = true;
+    btn.style.opacity = 0.6;
+  });
+
+  // 🎯 ไฮไลท์ปุ่มที่เลือก
+  clickedBtn.style.opacity = 1;
+  clickedBtn.style.background = "#28a745";
+
+  document.getElementById("nextBtn").style.display = "inline-block";
+}
+
+function nextQuestion(){
+  current++;
+  if(current < questions.length){
+    loadQuestion();
+  } else {
+    endGame();
+  }
+}
+
+function endGame(){
+  document.getElementById("game").innerHTML = `
+    <h2>🎉 จบเกม</h2>
+    <p>คะแนนของคุณ: ${score}</p>
+    <p>${score >= 1.5 ? "ทำได้ไงมีสมองนี้หว่า" : "เริ่ด"}</p>
+    <button onclick="location.reload()">🔄 เล่นใหม่</button>
+  `;
+}
+</script>
+
+</body>
+</html>
